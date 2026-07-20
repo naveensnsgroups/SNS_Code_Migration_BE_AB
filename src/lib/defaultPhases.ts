@@ -1,3 +1,5 @@
+import type { MigrationPhase } from '../types';
+
 // Mirrors MIGRATION_PHASES in SNS_Code_Migration_FE/types/index.ts — must stay
 // in sync (same ids/labels/order) since the frontend keys its pipeline stepper
 // off phase id.
@@ -5,7 +7,7 @@
 // detection. It's the Scanner Agent's job (the external AgentBuilder webhook)
 // to actually detect language/framework/database and flip this to 'done'
 // once it writes detectedStack back to the session.
-const DEFAULT_PHASES = [
+const DEFAULT_PHASES: MigrationPhase[] = [
   { id: 'scan', label: 'Stack Detection', status: 'pending' },
   { id: 'discovery', label: 'Discovery', status: 'pending' },
   { id: 'file-analysis', label: 'File Analysis', status: 'pending' },
@@ -18,4 +20,4 @@ const DEFAULT_PHASES = [
   { id: 'migration-assembly', label: 'Migration Report', status: 'pending' },
 ];
 
-module.exports = DEFAULT_PHASES;
+export default DEFAULT_PHASES;

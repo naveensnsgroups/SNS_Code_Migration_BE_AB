@@ -1,10 +1,10 @@
-const express = require('express');
-const multer = require('multer');
-const { v4: uuidv4 } = require('uuid');
-const Session = require('../models/Session');
-const FileContent = require('../models/FileContent');
-const { buildFileTree, projectNameFromPaths, slugify } = require('../lib/fileTree');
-const DEFAULT_PHASES = require('../lib/defaultPhases');
+import express, { Request, Response } from 'express';
+import multer from 'multer';
+import { v4 as uuidv4 } from 'uuid';
+import Session from '../models/Session';
+import FileContent from '../models/FileContent';
+import { buildFileTree, projectNameFromPaths, slugify } from '../lib/fileTree';
+import DEFAULT_PHASES from '../lib/defaultPhases';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
@@ -14,7 +14,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 // already knows about; this catches anything binary regardless of
 // extension, by sniffing for null bytes (real text essentially never
 // contains them; binary formats almost always do near the start of file).
-function isLikelyBinary(buffer) {
+function isLikelyBinary(buffer: Buffer): boolean {
   const sampleSize = Math.min(buffer.length, 8000);
   for (let i = 0; i < sampleSize; i++) {
     if (buffer[i] === 0) return true;
@@ -22,9 +22,9 @@ function isLikelyBinary(buffer) {
   return false;
 }
 
-router.post('/scan', upload.array('files'), async (req, res) => {
+router.post('/scan', upload.array('files'), async (req: Request, res: Response) => {
   try {
-    let paths = [];
+    let paths: string[] = [];
     try {
       paths = JSON.parse(req.body.paths || '[]');
     } catch {
@@ -46,7 +46,7 @@ router.post('/scan', upload.array('files'), async (req, res) => {
     // ASSET_EXTENSIONS check to classify it as 'asset-file' downstream, and
     // so it never bloats an LLM prompt) but `binaryContent` populated as
     // base64, so CodeViewer can still render it as an actual image preview.
-    const files = req.files || [];
+    const files = (req.files as Express.Multer.File[]) || [];
     const fileEntries = files
       .map((file, i) => ({ path: paths[i], buffer: file.buffer }))
       .filter(f => f.path)
@@ -94,10 +94,10 @@ router.post('/scan', upload.array('files'), async (req, res) => {
     }
 
     res.json({ sessionId });
-  } catch (err) {
+  } catch (err: any) {
     console.error('Scan failed:', err);
     res.status(500).json({ error: err.message || 'Scan failed.' });
   }
 });
 
-module.exports = router;
+export default router;

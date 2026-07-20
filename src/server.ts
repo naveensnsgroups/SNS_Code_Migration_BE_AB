@@ -1,10 +1,10 @@
-const express = require('express');
-const cors = require('cors');
-const config = require('./config');
-const connectDB = require('./db');
-const scanRoute = require('./routes/scan');
-const sessionRoute = require('./routes/session');
-const localOutputRoute = require('./routes/localOutput');
+import express from 'express';
+import cors from 'cors';
+import config from './config';
+import connectDB from './db';
+import scanRoute from './routes/scan';
+import sessionRoute from './routes/session';
+import localOutputRoute from './routes/localOutput';
 
 const app = express();
 app.use(cors());

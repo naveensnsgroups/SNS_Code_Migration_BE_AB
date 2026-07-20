@@ -1,9 +1,11 @@
+import type { FileNode } from '../types';
+
 // Builds a nested FileNode[] tree (matching SNS_Code_Migration_FE/types/index.ts)
 // from a flat list of relative file paths, e.g. ["MyApp/src/x.cbl", "MyApp/y.sql"].
-function buildFileTree(paths) {
-  const root = [];
+export function buildFileTree(paths: string[]): FileNode[] {
+  const root: FileNode[] = [];
 
-  function getOrCreateDirChildren(dirSegments) {
+  function getOrCreateDirChildren(dirSegments: string[]): FileNode[] {
     let children = root;
     let currentPath = '';
     for (const segment of dirSegments) {
@@ -13,7 +15,7 @@ function buildFileTree(paths) {
         dirNode = { name: segment, path: currentPath, type: 'directory', children: [] };
         children.push(dirNode);
       }
-      children = dirNode.children;
+      children = dirNode.children!;
     }
     return children;
   }
@@ -40,12 +42,12 @@ function buildFileTree(paths) {
 }
 
 // First path segment = the uploaded project's folder name.
-function projectNameFromPaths(paths) {
+export function projectNameFromPaths(paths: string[]): string {
   const firstPath = paths[0] || '';
   return firstPath.includes('/') ? firstPath.split('/')[0] : 'project';
 }
 
-function slugify(name) {
+export function slugify(name: string): string {
   return (
     name
       .toLowerCase()
@@ -53,5 +55,3 @@ function slugify(name) {
       .replace(/^-+|-+$/g, '') || 'project'
   );
 }
-
-module.exports = { buildFileTree, projectNameFromPaths, slugify };
