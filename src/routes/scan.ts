@@ -3,24 +3,11 @@ import multer from 'multer';
 import { v4 as uuidv4 } from 'uuid';
 import Session from '../models/Session';
 import FileContent from '../models/FileContent';
-import { buildFileTree, projectNameFromPaths, slugify } from '../lib/fileTree';
+import { buildFileTree, projectNameFromPaths, slugify, isLikelyBinary } from '../lib/fileTree';
 import DEFAULT_PHASES from '../lib/defaultPhases';
 
 const router = express.Router();
 const upload = multer({ storage: multer.memoryStorage() });
-
-// Content-based binary detection — a defense-in-depth backup to the
-// frontend's extension/folder filter. That filter can only catch types it
-// already knows about; this catches anything binary regardless of
-// extension, by sniffing for null bytes (real text essentially never
-// contains them; binary formats almost always do near the start of file).
-function isLikelyBinary(buffer: Buffer): boolean {
-  const sampleSize = Math.min(buffer.length, 8000);
-  for (let i = 0; i < sampleSize; i++) {
-    if (buffer[i] === 0) return true;
-  }
-  return false;
-}
 
 router.post('/scan', upload.array('files'), async (req: Request, res: Response) => {
   try {

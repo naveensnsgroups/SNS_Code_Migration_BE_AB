@@ -5,6 +5,7 @@ import connectDB from './db';
 import scanRoute from './routes/scan';
 import sessionRoute from './routes/session';
 import localOutputRoute from './routes/localOutput';
+import githubRoute from './routes/github';
 
 const app = express();
 app.use(cors());
@@ -15,6 +16,7 @@ app.get('/health', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api', scanRoute);
 app.use('/api', sessionRoute);
 app.use('/api', localOutputRoute);
+app.use('/api', githubRoute);
 
 connectDB()
   .then(() => {

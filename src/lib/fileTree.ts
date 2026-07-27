@@ -55,3 +55,16 @@ export function slugify(name: string): string {
       .replace(/^-+|-+$/g, '') || 'project'
   );
 }
+
+// Content-based binary detection, shared by the upload (scan) and GitHub-clone
+// ingestion paths. Sniffs for null bytes in the first 8KB — real text files
+// essentially never contain them, binary formats almost always do near the
+// start — so a binary asset can be stored with `content` empty (never bloating
+// an LLM prompt) but its path still preserved for the pipeline.
+export function isLikelyBinary(buffer: Buffer): boolean {
+  const sampleSize = Math.min(buffer.length, 8000);
+  for (let i = 0; i < sampleSize; i++) {
+    if (buffer[i] === 0) return true;
+  }
+  return false;
+}
