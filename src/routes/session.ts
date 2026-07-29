@@ -112,13 +112,19 @@ router.get('/file', async (req: Request, res: Response) => {
     if (!session) return res.status(404).json({ error: 'Session not found.' });
 
     const match = await FileContent.findOne({ sessionId, path }).lean();
-    const modernMatch = (session.modernFileContents || []).find((f: any) => f.path === path);
+    // Generated files live in the SAME collection as legacy files (Code
+    // Generation writes them there, under a "<modernPath>/" prefix) — there is
+    // no separate modernFileContents store. Route the found content into
+    // modernContent (not content) when the path falls under that prefix, so
+    // the UI's green "Modern" pane shows it instead of mislabeling it Legacy.
+    const modernPrefix = session.modernPath ? `${session.modernPath}/` : null;
+    const isModernPath = !!modernPrefix && typeof path === 'string' && path.startsWith(modernPrefix);
     res.json({
-      content: match ? match.content : null,
+      content: !isModernPath && match ? match.content : null,
       // Populated only for binary files (images, icons, etc.) — see FileContent
       // schema and scan.ts for why this is separate from `content`.
       binaryContent: match ? (match.binaryContent ?? null) : null,
-      modernContent: modernMatch ? modernMatch.content : null,
+      modernContent: isModernPath && match ? match.content : null,
     });
   } catch (err: any) {
     console.error('Failed to load file content:', err);

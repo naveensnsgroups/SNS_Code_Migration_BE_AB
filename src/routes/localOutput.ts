@@ -11,32 +11,47 @@ const router = express.Router();
 
 router.post('/local-output/write', (req: Request, res: Response) => {
   try {
-    const { localOutputPath, fileName, content, subDir } = req.body;
-    if (!localOutputPath || !fileName || content === undefined) {
-      return res.status(400).json({ error: 'localOutputPath, fileName, and content are required.' });
+    const { localOutputPath, fileName, content, subDir, relativePath } = req.body;
+    if (!localOutputPath || content === undefined || (!fileName && !relativePath)) {
+      return res.status(400).json({ error: 'localOutputPath, content, and either fileName or relativePath are required.' });
     }
 
-    // fileName (and subDir, if given) must be plain names, not nested or
-    // relative paths — guards against writing outside localOutputPath
-    // (e.g. "../../something").
-    const safeName = path.basename(fileName);
-    if (safeName !== fileName) {
-      return res.status(400).json({ error: 'fileName must not contain path separators.' });
-    }
-
-    let targetDir = localOutputPath;
-    if (subDir) {
-      const safeSubDir = path.basename(subDir);
-      if (safeSubDir !== subDir) {
-        return res.status(400).json({ error: 'subDir must not contain path separators.' });
+    let fullPath: string;
+    if (relativePath) {
+      // Generated code trees are arbitrarily nested (e.g. app/api/routers/x.py),
+      // unlike the single flat report/knowledge-graph files below — resolve
+      // against localOutputPath and verify the result never escapes it, rather
+      // than restricting to one path segment like fileName/subDir do.
+      const resolvedBase = path.resolve(localOutputPath);
+      const resolvedTarget = path.resolve(resolvedBase, relativePath);
+      if (resolvedTarget !== resolvedBase && !resolvedTarget.startsWith(resolvedBase + path.sep)) {
+        return res.status(400).json({ error: 'relativePath must resolve inside localOutputPath.' });
       }
-      targetDir = path.join(localOutputPath, safeSubDir);
+      fs.mkdirSync(path.dirname(resolvedTarget), { recursive: true });
+      fullPath = resolvedTarget;
+    } else {
+      // fileName (and subDir, if given) must be plain names, not nested or
+      // relative paths — guards against writing outside localOutputPath
+      // (e.g. "../../something").
+      const safeName = path.basename(fileName);
+      if (safeName !== fileName) {
+        return res.status(400).json({ error: 'fileName must not contain path separators.' });
+      }
+
+      let targetDir = localOutputPath;
+      if (subDir) {
+        const safeSubDir = path.basename(subDir);
+        if (safeSubDir !== subDir) {
+          return res.status(400).json({ error: 'subDir must not contain path separators.' });
+        }
+        targetDir = path.join(localOutputPath, safeSubDir);
+      }
+
+      fs.mkdirSync(targetDir, { recursive: true });
+      fullPath = path.join(targetDir, safeName);
     }
 
-    fs.mkdirSync(targetDir, { recursive: true });
-    const fullPath = path.join(targetDir, safeName);
     fs.writeFileSync(fullPath, content, 'utf-8');
-
     res.json({ ok: true, path: fullPath });
   } catch (err: any) {
     console.error('Failed to write local output:', err);
