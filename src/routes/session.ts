@@ -40,6 +40,19 @@ router.get('/migrate/state', async (req: Request, res: Response) => {
       graphResolutionSummary: session.graphResolutionSummary ?? null,
       fullProjectCheckResult: session.fullProjectCheckResult ?? null,
       planSanityWarning: session.planSanityWarning ?? null,
+      // Human sign-off gate between planning and code generation. Written to
+      // MongoDB by the Migration Planning Agent ('pending') and the separate
+      // Migration Plan Approval Agent ('approved'/'disapproved'); the frontend
+      // gates its Generate Code button on these, so they have to be read back
+      // out here or an approval that really landed stays invisible to the UI.
+      approvalStatus: session.approvalStatus ?? null,
+      approvalNote: session.approvalNote ?? null,
+      // Validation output the planning agent produces alongside the task list.
+      planValidation: session.planValidation ?? null,
+      graphValidation: session.graphValidation ?? null,
+      // Categories whose extraction failed to parse during file analysis —
+      // surfaces a silently hollow knowledge graph instead of hiding it.
+      extractionWarnings: session.extractionWarnings ?? null,
       reportedIssues: session.reportedIssues || [],
       errorMessage: session.errorMessage ?? undefined,
       logs: session.logs || [],
