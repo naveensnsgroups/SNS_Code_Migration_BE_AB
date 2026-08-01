@@ -53,6 +53,18 @@ router.get('/migrate/state', async (req: Request, res: Response) => {
       // Categories whose extraction failed to parse during file analysis —
       // surfaces a silently hollow knowledge graph instead of hiding it.
       extractionWarnings: session.extractionWarnings ?? null,
+      // Code generation runs one CHUNK of tasks per invocation and reports how
+      // many are still outstanding. The frontend drives the loop off this, so
+      // it has to be readable here: calling again while the count is dropping,
+      // stopping when it reaches 0 or stalls. codeGenLastChunkGenerated is what
+      // makes "stalled" detectable — a chunk that generated nothing means
+      // calling again would loop forever.
+      codeGenOutstandingCount: session.codeGenOutstandingCount ?? null,
+      codeGenLastChunkGenerated: session.codeGenLastChunkGenerated ?? null,
+      codeGenLastChunkLayer: session.codeGenLastChunkLayer ?? null,
+      // What the master review pass actually caught and repaired this chunk.
+      codeGenMasterFixCount: session.codeGenMasterFixCount ?? null,
+      codeGenMasterReviewSummary: session.codeGenMasterReviewSummary ?? null,
       reportedIssues: session.reportedIssues || [],
       errorMessage: session.errorMessage ?? undefined,
       logs: session.logs || [],
